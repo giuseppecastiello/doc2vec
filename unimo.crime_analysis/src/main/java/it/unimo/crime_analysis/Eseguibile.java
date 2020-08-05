@@ -88,6 +88,7 @@ public class Eseguibile {
 		}
 		return file;
 	}
+
 	public static void main(String[] args) throws Exception {
 		File file = new File("news.txt");
 
@@ -95,15 +96,10 @@ public class Eseguibile {
 			file = createFormattedFile(file);	
 		else
 			log.info("Found a file news.txt, the algorithm will train on this file.");
-		
+
 		SentenceIterator iter = new BasicLineIterator(file);
-/*	
-		while(iter.hasNext()) {
-			System.out.println(iter.nextSentence());
-		}
-*/
 		AbstractCache<VocabWord> cache = new AbstractCache<>();
-		
+
 		LabelsSource source = new LabelsSource("DOC_");
 
 		TokenizerFactory t = new DefaultTokenizerFactory();
@@ -126,14 +122,16 @@ public class Eseguibile {
 
 		vec.fit();
 
-		double similarity1 = vec.similarity("Gli svaligiano nella notte la prima e la seconda casa", 
-				"Ladri a casa del consigliere Antonio Spica");
+		double similarity1 = (vec.similarity("DOC_0", "DOC_52") +
+				vec.similarity("DOC_1", "DOC_53") +
+				vec.similarity("DOC_2", "DOC_54")) / 3;
 		log.info("('Gli svaligiano nella notte la prima e la seconda casa'/'Ladri a casa del consigliere Antonio Spica') similarity: " + similarity1);
 
-		double similarity2 = vec.similarity("Gli svaligiano nella notte la prima e la seconda casa", 
-				"Emis Killa picchiato a Modena");
+		double similarity2 = (vec.similarity("DOC_0", "DOC_84") +
+				vec.similarity("DOC_1", "DOC_85") +
+				vec.similarity("DOC_2", "DOC_86")) / 3;
 		log.info("('Gli svaligiano nella notte la prima e la seconda casa'/'Emis Killa picchiato a Modena') similarity: " + similarity2);
-		
+
 		/*
 		double similarity3 = vec.similarity("DOC_6347", "DOC_3720");
 		log.info("6348/3721 ('This is my case .'/'This is my way .') similarity: " + similarity3);
@@ -141,7 +139,8 @@ public class Eseguibile {
 
 		double similarityX = vec.similarity("DOC_3720", "DOC_9852");
 		log.info("3721/9853 ('This is my way .'/'We now have one .') similarity: " + similarityX +
-				"(should be significantly lower)");*/
+				"(should be significantly lower)");
+		 */
 	}
 
 }
