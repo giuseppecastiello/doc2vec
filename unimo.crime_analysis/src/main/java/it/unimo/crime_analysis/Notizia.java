@@ -17,20 +17,21 @@ public class Notizia {
 	public String addSpaces(@Nonnull String in) {
 		StringBuilder out = new StringBuilder();
 		for (int i = 0; i < in.length(); i++) {
-			if ((in.charAt(i) >= '!' && in.charAt(i) <= '/')
-					|| (in.charAt(i) >= ':' && in.charAt(i) <= '?' + 1)
-					|| (in.charAt(i) >= '{' && in.charAt(i) <= '}' + 1)
-					|| (in.charAt(i) == '�' || in.charAt(i) == '�')
-					|| (in.charAt(i) == 174 || in.charAt(i) == 175 || in.charAt(i) == '�')) {
+			char c = in.charAt(i);
+			if (!(c >= 'a' && c <= 'z') &&
+					!(c >= 'A' && c <= 'Z') &&
+					!(c >= '0' && c<= '9') &&
+					!(c >= 192 && c<= 382) &&
+					!(c == ' ')) {
 				if (i > 0 && in.charAt(i - 1) != ' ')
 					out.append(' ');
-				out.append(in.charAt(i));
-				//out.append('\n');
+				out.append(c);
 				if (i < in.length() - 1 && in.charAt(i + 1) != ' ')
 					out.append(' ');
 			}
 			else {
-				out.append(in.charAt(i));
+				if (c != '\n' && c != '\r')
+					out.append(c);
 			}
 		}
 		return out.toString();
@@ -45,7 +46,7 @@ public class Notizia {
 	
 	@Override
 	public String toString() {
-		return title + '\n' + description + '\n' + text + "\n\n";
+		return title + '\n' + description + '\n' + text + "\n";
 	}
 	
 }
