@@ -23,15 +23,16 @@ public class Notizia {
 					!(c >= '0' && c<= '9') &&
 					!(c >= 192 && c<= 382) &&
 					!(c == ' ')) {
-				if (i > 0 && in.charAt(i - 1) != ' ')
-					out.append(' ');
-				out.append(c);
-				if (i < in.length() - 1 && in.charAt(i + 1) != ' ')
-					out.append(' ');
+				if (c != '\n' && c != '\r') {
+					if (i > 0 && in.charAt(i - 1) != ' ')
+						out.append(' ');
+					out.append(c);
+					if (i < in.length() - 1 && in.charAt(i + 1) != ' ')
+						out.append(' ');
+				}
 			}
 			else {
-				if (c != '\n' && c != '\r')
-					out.append(c);
+				out.append(c);
 			}
 		}
 		return out.toString();

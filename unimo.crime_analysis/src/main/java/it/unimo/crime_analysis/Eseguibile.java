@@ -53,8 +53,8 @@ public class Eseguibile {
 		try {
 			rs = db.executeQuery();
 			while(rs.next()) {
-				crimes.add(new Notizia(rs.getString("title"), 
-						rs.getString("description"), rs.getString("text")));
+				crimes.add((new Notizia(rs.getString("title"), 
+						rs.getString("description"), rs.getString("text"))).format());
 			}
 			rs.close();
 			db.close();
@@ -75,7 +75,6 @@ public class Eseguibile {
 		@SuppressWarnings("resource")
 		BufferedWriter bw = new BufferedWriter(fw);
 		for (Notizia notice : crimes) {
-			notice.format();
 			try {
 				bw.write(notice.toString());
 			} catch (IOException e) {
@@ -140,8 +139,10 @@ public class Eseguibile {
 	public static void main(String[] args) throws Exception {
 		File file = new File("news.txt");
 
-		if (!file.exists())
-			file = createFormattedFile(file);	
+		if (!file.exists()) {
+			file = createFormattedFile(file);
+			log.info("File successfully created.");
+		}
 		else {
 			log.info("Found a file news.txt, the algorithm will train on this file.");
 			readFormattedFile(file);
@@ -163,7 +164,8 @@ public class Eseguibile {
 		stopWords.add("“");
 		stopWords.add("”");
 		stopWords.add("'");
-		
+		stopWords.add(" ");
+		stopWords.add("nbsp");
 		
 		ParagraphVectors vec = new ParagraphVectors.Builder()
 				.minWordFrequency(1)
