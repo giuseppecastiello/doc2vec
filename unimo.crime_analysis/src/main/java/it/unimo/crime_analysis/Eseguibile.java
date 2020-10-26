@@ -148,7 +148,6 @@ public class Eseguibile {
 			readFormattedFile(file);
 		}
 
-		String str = "Caro lettore , da tre settimane i giornalisti di ModenaToday ed i colleghi delle altre redazioni lavorano senza sosta , giorno e notte , per fornire aggiornamenti precisi ed affidabili sulla emergenza CoronaVirus . Se apprezzi il nostro lavoro , da sempre per te gratuito , e se ci leggi tutti i giorni , ti chiediamo un piccolo contributo per supportarci in questo momento straordinario . Grazie !";
 		SentenceIterator iter = new BasicLineIterator(file);
 		AbstractCache<VocabWord> cache = new AbstractCache<>();
 
@@ -169,12 +168,12 @@ public class Eseguibile {
 		
 		ParagraphVectors vec = new ParagraphVectors.Builder()
 				.minWordFrequency(1)
-				.iterations(5)
-				.epochs(2)
+				.iterations(6)
+				.epochs(3)
 				.layerSize(300)
 				.stopWords(stopWords)
-				.workers(4)
-				.learningRate(0.05)
+				//.workers(4)
+				.learningRate(0.045)
 				.labelsSource(source)
 				.windowSize(10)
 				.iterate(iter)
@@ -182,32 +181,49 @@ public class Eseguibile {
 				.vocabCache(cache)
 				.tokenizerFactory(t)
 				.sampling(0)
-				.resetModel(true)
+				//.resetModel(true)
 				.build();
 
 		vec.fit();
 
-		double title_similarity, desc_similarity, text_similarity;
-		char contains1, contains2;
+		double title_similarity, desc_similarity, text_similarity, threshold = 0.5;
+		//String str = "Caro lettore , da tre settimane i giornalisti di ModenaToday ed i colleghi delle altre redazioni lavorano senza sosta , giorno e notte , per fornire aggiornamenti precisi ed affidabili sulla emergenza CoronaVirus . Se apprezzi il nostro lavoro , da sempre per te gratuito , e se ci leggi tutti i giorni , ti chiediamo un piccolo contributo per supportarci in questo momento straordinario . Grazie !";
+		//char contains1, contains2;
 		int index_i, index_j;
 		for (int i = 0; i < crimes.size(); i++) {
-			if (crimes.get(i).text.contains(str))
+			Notizia ni, nj;
+			ni = crimes.get(i);
+			/*
+			if (ni.text.contains(str))
 				contains1 = 'y';
 			else
 				contains1 = 'n';
+			*/
 			for (int j = i + 1; j < crimes.size(); j++) {
 				index_i = 3*i;
 				index_j = 3*j;
-				title_similarity = vec.similarity("DOC_" + index_i, "DOC_" + index_j);
+				nj = crimes.get(j);
+				if ("".equals(ni.title) || "".equals(nj.title))
+					title_similarity = threshold;
+				else
+					title_similarity = vec.similarity("DOC_" + index_i, "DOC_" + index_j);
 				index_i++; index_j++;
-				desc_similarity = vec.similarity("DOC_" + index_i, "DOC_" + index_j);
+				if ("".equals(ni.description) || "".equals(nj.description))
+					desc_similarity = threshold;
+				else
+					desc_similarity = vec.similarity("DOC_" + index_i, "DOC_" + index_j);
 				index_i++; index_j++;
-				text_similarity = vec.similarity("DOC_" + index_i, "DOC_" + index_j);
-				if ((title_similarity + desc_similarity + text_similarity) /3 >= 0.5) {
+				if ("".equals(nj.text) || "".equals(nj.text))
+					text_similarity = threshold;
+				else
+					text_similarity = vec.similarity("DOC_" + index_i, "DOC_" + index_j);
+				if ((title_similarity + desc_similarity + text_similarity) /3 >= threshold) {
+					/*
 					if (crimes.get(j).text.contains(str))
 						contains2 = 'y';
 					else
 						contains2 = 'n';
+					*/
 					log.info("DOC_" + index_i + ", DOC_" + index_j);
 					log.info("title_similarity: " + title_similarity);
 					log.info(crimes.get(i).title);
@@ -217,8 +233,8 @@ public class Eseguibile {
 					log.info(crimes.get(j).description);
 					log.info("text_similarity: " + text_similarity);
 					log.info(crimes.get(i).text);
-					log.info(crimes.get(j).text);
-					log.info(contains1 + " " + contains2 + "\n");
+					log.info(crimes.get(j).text + "\n");
+					//log.info(contains1 + " " + contains2 + "\n");
 				}
 			}
 		}
