@@ -54,7 +54,7 @@ public class Eseguibile {
 			rs = db.executeQuery();
 			while(rs.next()) {
 				crimes.add((new Notizia(rs.getString("title"), 
-						rs.getString("description"), rs.getString("text"))).format());
+						rs.getString("description"), rs.getString("text"))));
 			}
 			rs.close();
 			db.close();
@@ -90,6 +90,7 @@ public class Eseguibile {
 		}
 		return file;
 	}
+	
 	private static void readFormattedFile(File file) {
 		FileReader fr = null;
 		try {
@@ -98,10 +99,11 @@ public class Eseguibile {
 			e.printStackTrace();
 		}
 		BufferedReader br = new BufferedReader(fr);
-		String title, description, text;
+		//String title, description, text;
+		String all;
 		try {
-			while((title = br.readLine()) != null && (description = br.readLine()) != null && (text = br.readLine()) != null) {
-				crimes.add(new Notizia(title, description, text));
+			while((all = br.readLine()) != null/*(title = br.readLine()) != null && (description = br.readLine()) != null && (text = br.readLine()) != null*/) {
+				crimes.add(new Notizia(all));
 			}
 			br.close();
 			fr.close();
@@ -135,7 +137,38 @@ public class Eseguibile {
 			e.printStackTrace();
 		}
 	}
-
+	
+	private static BufferedWriter createOutputFile() {
+		FileWriter fw = null;
+		try {
+			fw = new FileWriter("output.txt");
+		} catch (IOException e) {
+			e.printStackTrace();
+			throw new RuntimeException();
+		}
+		@SuppressWarnings("resource")
+		BufferedWriter bw = new BufferedWriter(fw);
+		return bw;
+	}
+	
+	private static void writeOnOutputFile(BufferedWriter bw, String str) {
+		try {
+			bw.write(str + "\n");
+		} catch (IOException e) {
+			e.printStackTrace();
+			throw new RuntimeException();
+		}
+	}
+	
+	private static void closeOutputFile(BufferedWriter bw) {
+		try {
+			bw.flush();
+			bw.close();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+	
 	public static void main(String[] args) throws Exception {
 		File file = new File("news.txt");
 
@@ -154,7 +187,8 @@ public class Eseguibile {
 		LabelsSource source = new LabelsSource("DOC_");
 		TokenizerFactory t = new DefaultTokenizerFactory();
 		t.setTokenPreProcessor(new CommonPreprocessor());
-		createTokenizedFile(t);
+		//createTokenizedFile(t);
+		
 		ArrayList<String> stopWords = new ArrayList<String>();
 		stopWords.add("-");
 		stopWords.add("«");
@@ -164,15 +198,13 @@ public class Eseguibile {
 		stopWords.add("”");
 		stopWords.add("'");
 		stopWords.add(" ");
-		stopWords.add("nbsp");
 		
 		ParagraphVectors vec = new ParagraphVectors.Builder()
 				.minWordFrequency(1)
 				.iterations(6)
-				.epochs(3)
+				.epochs(2)
 				.layerSize(300)
 				.stopWords(stopWords)
-				//.workers(4)
 				.learningRate(0.045)
 				.labelsSource(source)
 				.windowSize(10)
@@ -181,28 +213,24 @@ public class Eseguibile {
 				.vocabCache(cache)
 				.tokenizerFactory(t)
 				.sampling(0)
-				//.resetModel(true)
 				.build();
 
 		vec.fit();
-
-		double title_similarity, desc_similarity, text_similarity, threshold = 0.5;
-		//String str = "Caro lettore , da tre settimane i giornalisti di ModenaToday ed i colleghi delle altre redazioni lavorano senza sosta , giorno e notte , per fornire aggiornamenti precisi ed affidabili sulla emergenza CoronaVirus . Se apprezzi il nostro lavoro , da sempre per te gratuito , e se ci leggi tutti i giorni , ti chiediamo un piccolo contributo per supportarci in questo momento straordinario . Grazie !";
-		//char contains1, contains2;
+		/*
+		double title_similarity, desc_similarity, text_similarity;
 		int index_i, index_j;
+		*/
+		double all_similarity, threshold = 0.5;
+		BufferedWriter bw = createOutputFile();
+		
 		for (int i = 0; i < crimes.size(); i++) {
 			Notizia ni, nj;
 			ni = crimes.get(i);
-			/*
-			if (ni.text.contains(str))
-				contains1 = 'y';
-			else
-				contains1 = 'n';
-			*/
 			for (int j = i + 1; j < crimes.size(); j++) {
-				index_i = 3*i;
-				index_j = 3*j;
 				nj = crimes.get(j);
+				/*
+				index_i = 4*i;
+				index_j = 4*j;
 				if ("".equals(ni.title) || "".equals(nj.title))
 					title_similarity = threshold;
 				else
@@ -217,26 +245,30 @@ public class Eseguibile {
 					text_similarity = threshold;
 				else
 					text_similarity = vec.similarity("DOC_" + index_i, "DOC_" + index_j);
-				if ((title_similarity + desc_similarity + text_similarity) /3 >= threshold) {
+				index_i++; index_j++;
+				all_similarity = vec.similarity("DOC_" + index_i, "DOC_" + index_j);
+				*/
+				all_similarity = vec.similarity("DOC_" + i, "DOC_" + j);
+				if (/*(title_similarity + desc_similarity + text_similarity) /3 >= threshold ||*/
+						all_similarity >= threshold) {
+					writeOnOutputFile(bw, "DOC_" + i + ", DOC_" + j);
 					/*
-					if (crimes.get(j).text.contains(str))
-						contains2 = 'y';
-					else
-						contains2 = 'n';
+					writeOnOutputFile(bw, "title_similarity: " + title_similarity);
+					writeOnOutputFile(bw, ni.title);
+					writeOnOutputFile(bw, nj.title);
+					writeOnOutputFile(bw, "desc_similarity: " + desc_similarity);
+					writeOnOutputFile(bw, ni.description);
+					writeOnOutputFile(bw, nj.description);
+					writeOnOutputFile(bw, "text_similarity: " + text_similarity);
+					writeOnOutputFile(bw, ni.text);
+					writeOnOutputFile(bw, nj.text);
 					*/
-					log.info("DOC_" + index_i + ", DOC_" + index_j);
-					log.info("title_similarity: " + title_similarity);
-					log.info(crimes.get(i).title);
-					log.info(crimes.get(j).title);
-					log.info("desc_similarity: " + desc_similarity);
-					log.info(crimes.get(i).description);
-					log.info(crimes.get(j).description);
-					log.info("text_similarity: " + text_similarity);
-					log.info(crimes.get(i).text);
-					log.info(crimes.get(j).text + "\n");
-					//log.info(contains1 + " " + contains2 + "\n");
+					writeOnOutputFile(bw, ni.all);
+					writeOnOutputFile(bw, nj.all);
+					writeOnOutputFile(bw, "all_similarity: " + all_similarity + "\n");
 				}
 			}
 		}
+		closeOutputFile(bw);
 	}
 }
