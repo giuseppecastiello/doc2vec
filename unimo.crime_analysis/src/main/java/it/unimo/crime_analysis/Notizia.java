@@ -3,9 +3,6 @@ package it.unimo.crime_analysis;
 import javax.annotation.Nonnull;
 
 public class Notizia {
-	/*String title;
-	String description;
-	String text;*/
 	String all;
 	
 	public Notizia(String all) {
@@ -15,9 +12,6 @@ public class Notizia {
 	
 	public Notizia(String title, String description, String text) {
 		super();
-		/*this.title = title;
-		this.description = description;
-		this.text = text;*/
 		this.all = addSpaces(title + " " + description + " " + text);
 	}
 	
@@ -44,18 +38,10 @@ public class Notizia {
 		}
 		return out.toString();
 	}
-	/*
-	private Notizia format() {
-		this.title = addSpaces(this.title);
-		this.description = addSpaces(this.description);
-		this.text = addSpaces(this.text);
-		this.all = this.title + " " + this.description + " " + this.text;
-		return this;
-	}
-	*/
+	
 	@Override
 	public String toString() {
-		return all + "\n"; //title + '\n' + description + '\n' + text + "\n" + all + "\n";
+		return all + "\n";
 	}
 	
 }
