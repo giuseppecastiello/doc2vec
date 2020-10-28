@@ -18,7 +18,7 @@ import org.deeplearning4j.text.tokenization.tokenizer.preprocessor.CommonPreproc
 import org.deeplearning4j.text.tokenization.tokenizerfactory.DefaultTokenizerFactory;
 import org.deeplearning4j.text.tokenization.tokenizerfactory.TokenizerFactory;
 
-public class Eseguibile {
+public class Exe {
 /*
 	private static void createTokenizedFile(List<Notizia> crimes, TokenizerFactory t) {
 		FileWriter fw = null;
@@ -30,7 +30,7 @@ public class Eseguibile {
 		}
 		@SuppressWarnings("resource")
 		BufferedWriter bw = new BufferedWriter(fw);
-		for (Notizia notice : crimes) {
+		for (Notice notice : crimes) {
 			try {
 				bw.write(t.create(notice.toString()).getTokens().toString() + "\n");
 			} catch (IOException e) {
@@ -49,10 +49,10 @@ public class Eseguibile {
 	public static void main(String[] args) throws Exception {
 		
 		NewsFileClass news = new NewsFileClass(); 
-		List<Notizia> crimes = news.getCrimes();
+		List<Notice> crimes = news.getCrimes();
+		
 		SentenceIterator iter = new BasicLineIterator(news.getFile());
 		AbstractCache<VocabWord> cache = new AbstractCache<>();
-
 		LabelsSource source = new LabelsSource("DOC_");
 		TokenizerFactory t = new DefaultTokenizerFactory();
 		t.setTokenPreProcessor(new CommonPreprocessor());
@@ -63,13 +63,13 @@ public class Eseguibile {
 
 		ParagraphVectors vec = new ParagraphVectors.Builder()
 				.minWordFrequency(1)
-				.iterations(6)
+				.iterations(5) //6
 				.epochs(2)
-				.layerSize(300)
+				.layerSize(250)
 				.stopWords(stopWords)
-				.learningRate(0.045)
+				.learningRate(0.040)
 				.labelsSource(source)
-				.windowSize(10)
+				.windowSize(7) //10 //5
 				.iterate(iter)
 				.trainWordVectors(false)
 				.vocabCache(cache)
@@ -79,23 +79,30 @@ public class Eseguibile {
 
 		vec.fit();
 		
-		double all_similarity, threshold = 0.5;
+		double all_similarity, threshold_down = 0.35, threshold_up = 0.7;
 		OutputFileClass out = new OutputFileClass();
+		int c = 0;
 		
 		for (int i = 0; i < crimes.size(); i++) {
-			Notizia ni, nj;
+			Notice ni, nj;
 			ni = crimes.get(i);
 			for (int j = i + 1; j < crimes.size(); j++) {
 				nj = crimes.get(j);
+				if (!ni.isInWindowWith(nj))
+					continue;
 				all_similarity = vec.similarity("DOC_" + i, "DOC_" + j);
-				if (all_similarity >= threshold) {
+				if (all_similarity < threshold_down)
+					continue;
+				if (all_similarity > threshold_up || ni.borderLineCompare(nj, all_similarity, threshold_up)) {
+					c++;
 					out.write("DOC_" + i + ", DOC_" + j);
-					out.write(ni.all);
-					out.write(nj.all);
+					out.write(ni.toString());
+					out.write(nj.toString());
 					out.write("all_similarity: " + all_similarity + "\n");
 				}
 			}
 		}
 		out.close();
+		System.out.println(c);
 	}
 }

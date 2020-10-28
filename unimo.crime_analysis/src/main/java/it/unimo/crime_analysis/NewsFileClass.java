@@ -1,10 +1,7 @@
 package it.unimo.crime_analysis;
 
-import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.sql.ResultSet;
@@ -14,27 +11,23 @@ import java.util.List;
 
 public class NewsFileClass {
 	private DBManager db;
-	private List<Notizia> crimes;
+	private List<Notice> crimes;
 	private File file;
-	
+
 	public NewsFileClass(){
 		file = new File("news.txt");
-		if (!file.exists()) {
-			crimes = dbExtraction();
-			createFormattedFile(file);
-		}
-		else
-			readFormattedFile(file);
+		crimes = dbExtraction();
+		createFormattedFile(file);
 	}
-	
-	public List<Notizia> getCrimes() {
+
+	public List<Notice> getCrimes() {
 		return crimes;
 	}
-	
+
 	public File getFile() {
 		return file;
 	}
-	
+
 	private void dbConnection() {
 		try {
 			db = new DBManager(DBManager.JDBCURL);
@@ -47,15 +40,15 @@ public class NewsFileClass {
 		}
 	}
 
-	private List<Notizia> dbExtraction() {
+	private List<Notice> dbExtraction() {
 		dbConnection();
 		ResultSet rs = null;
-		crimes = new ArrayList<Notizia>();
+		crimes = new ArrayList<Notice>();
 		try {
 			rs = db.executeQuery();
 			while(rs.next()) {
-				crimes.add((new Notizia(rs.getString("title"), 
-						rs.getString("description"), rs.getString("text"))));
+				crimes.add((new Notice(rs.getString("title"), rs.getString("description"),
+						rs.getString("text"), rs.getDate("date"), rs.getString("tag"), rs.getString("municipality"))));
 			}
 			rs.close();
 			db.close();
@@ -65,7 +58,7 @@ public class NewsFileClass {
 		return crimes;
 	}
 
-	public void createFormattedFile(File file) {
+	private void createFormattedFile(File file) {
 		FileWriter fw = null;
 		try {
 			fw = new FileWriter(file);
@@ -75,9 +68,9 @@ public class NewsFileClass {
 		}
 		@SuppressWarnings("resource")
 		BufferedWriter bw = new BufferedWriter(fw);
-		for (Notizia notice : crimes) {
+		for (Notice notice : crimes) {
 			try {
-				bw.write(notice.toString());
+				bw.write(notice + "\n");
 			} catch (IOException e) {
 				e.printStackTrace();
 				throw new RuntimeException();
@@ -91,24 +84,4 @@ public class NewsFileClass {
 		}
 	}
 	
-	public void readFormattedFile(File file) {
-		FileReader fr = null;
-		try {
-			fr = new FileReader(file);
-		} catch (FileNotFoundException e) {
-			e.printStackTrace();
-		}
-		BufferedReader br = new BufferedReader(fr);
-		String all;
-		try {
-			while((all = br.readLine()) != null) {
-				crimes.add(new Notizia(all));
-			}
-			br.close();
-			fr.close();
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-	}
-
 }
