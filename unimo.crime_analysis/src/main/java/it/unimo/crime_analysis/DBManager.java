@@ -19,7 +19,7 @@ public class DBManager {
 	}
 
 	public ResultSet executeQuery() throws SQLException {
-		String sql = "SELECT title, description, text, date, tag, municipality FROM crime_news.news;";
+		String sql = "SELECT title, description, text, date, tag, municipality FROM crime_news.news WHERE EXTRACT(YEAR FROM date) < 2020 OR EXTRACT(MONTH FROM date) < 7;";
 		return statement.executeQuery(sql);
 	}
 
