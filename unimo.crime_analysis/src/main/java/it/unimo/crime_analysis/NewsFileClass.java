@@ -44,19 +44,20 @@ public class NewsFileClass {
 		dbConnection();
 		ResultSet rs = null;
 		crimes = new ArrayList<Notice>();
+		String sql = "SELECT title, description, text, date, tag, municipality, date_event, id FROM crime_news.news  join crime_news.link on crime_news.news.url = crime_news.link.url WHERE EXTRACT(YEAR FROM date) < 2020 OR EXTRACT(MONTH FROM date) < 7;";
 		try {
-			rs = db.executeQuery();
+			rs = db.executeQuery(sql);
 			while(rs.next()) {
-				crimes.add((new Notice(rs.getString("title"), rs.getString("description"),
-						rs.getString("text"), rs.getDate("date"), rs.getString("tag"), rs.getString("municipality"))));
+				crimes.add((new Notice(rs.getString("title"), rs.getString("description"), rs.getString("text"), 
+						rs.getDate("date"), rs.getString("tag"), rs.getString("municipality"), rs.getDate("date_event"), rs.getInt("id"))));
 			}
 			rs.close();
-			db.close();
 		} catch (SQLException e) {
 			e.printStackTrace();
 		}
 		return crimes;
 	}
+
 
 	private void createFormattedFile(File file) {
 		FileWriter fw = null;
@@ -83,5 +84,12 @@ public class NewsFileClass {
 			e.printStackTrace();
 		}
 	}
-	
+
+	public void close() {
+		try {
+			db.close();
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+	}
 }

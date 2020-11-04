@@ -18,8 +18,7 @@ public class DBManager {
 		statement.setQueryTimeout(30); 
 	}
 
-	public ResultSet executeQuery() throws SQLException {
-		String sql = "SELECT title, description, text, date, tag, municipality FROM crime_news.news WHERE EXTRACT(YEAR FROM date) < 2020 OR EXTRACT(MONTH FROM date) < 7;";
+	public ResultSet executeQuery(String sql) throws SQLException {
 		return statement.executeQuery(sql);
 	}
 

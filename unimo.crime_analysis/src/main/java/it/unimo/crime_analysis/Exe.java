@@ -1,4 +1,5 @@
 package it.unimo.crime_analysis;
+import java.io.File;
 /*
 import java.io.BufferedWriter;
 import java.io.FileWriter;
@@ -46,8 +47,7 @@ public class Exe {
 		}
 	}
 */
-	public static void main(String[] args) throws Exception {
-		
+	private static void CrimeAnalysisWithFilters() throws Exception{
 		NewsFileClass news = new NewsFileClass(); 
 		List<Notice> crimes = news.getCrimes();
 		
@@ -65,7 +65,7 @@ public class Exe {
 				.minWordFrequency(1)
 				.iterations(5) //6
 				.epochs(2)
-				.layerSize(250)
+				.layerSize(300)
 				.stopWords(stopWords)
 				.learningRate(0.040)
 				.labelsSource(source)
@@ -80,7 +80,7 @@ public class Exe {
 		vec.fit();
 		
 		double all_similarity, threshold_down = 0.35, threshold_up = 0.7;
-		OutputFileClass out = new OutputFileClass();
+		OutputFileClass out = new OutputFileClass("OutWFilters.txt");
 		int c = 0;
 		
 		for (int i = 0; i < crimes.size(); i++) {
@@ -102,7 +102,69 @@ public class Exe {
 				}
 			}
 		}
+		news.close();
 		out.close();
 		System.out.println(c);
+	}
+	
+	private static void CreateGoldStandardFull(){
+		NewsFileClass news = new NewsFileClass(); 
+		List<Notice> crimes = news.getCrimes();
+		news.close();
+		File gs = new File("GoldStandardFull.txt");
+		
+		if (gs.exists())	return;
+		
+		int c = 0;
+		OutputFileClass out = new OutputFileClass("GoldStandardFull.txt");
+		for (int i = 0; i < crimes.size(); i++) {
+			Notice ni, nj;
+			ni = crimes.get(i);
+			if (!ni.isInGen2020())
+				continue;
+			for (int j = i + 1; j < crimes.size(); j++) {
+				nj = crimes.get(j);
+				if (!nj.isInGen2020() || !ni.isInWindowWith(nj))
+					continue;
+				out.write(ni.gsToString());
+				out.write(nj.gsToString());
+				out.write("");
+				c++;
+			}
+		}
+		out.close();
+		System.out.println(c);
+	}
+	
+	private static void CreateGoldStandard(){
+		NewsFileClass news = new NewsFileClass(); 
+		List<Notice> crimes = news.getCrimes();
+		news.close();
+		File gs = new File("GoldStandard.txt");
+		
+		if (gs.exists())	return;
+		
+		OutputFileClass out = new OutputFileClass("GoldStandard.txt");
+		for (int i = 0; i < crimes.size(); i++) {
+			Notice ni, nj;
+			ni = crimes.get(i);
+			if (!ni.isInGen2020())
+				continue;
+			for (int j = i + 1; j < crimes.size(); j++) {
+				nj = crimes.get(j);
+				if (!nj.isInGen2020() || !ni.isInWindowWith(nj))
+					continue;
+				out.write(ni.gsToString());
+				out.write(nj.gsToString());
+				out.write("");
+			}
+		}
+		out.close();
+	}
+	
+	public static void main(String[] args) throws Exception {
+		//CrimeAnalysisWithFilters();
+		//CreateGoldStandardFull();
+		
 	}
 }

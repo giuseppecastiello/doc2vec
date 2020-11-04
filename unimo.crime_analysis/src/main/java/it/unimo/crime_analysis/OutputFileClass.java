@@ -7,14 +7,14 @@ import java.io.IOException;
 public class OutputFileClass {
 	private BufferedWriter bw;
 	
-	public OutputFileClass() {
-		createOutputFile();
+	public OutputFileClass(String filename) {
+		createOutputFile(filename);
 	}
 	
-	private void createOutputFile() {
+	private void createOutputFile(String filename) {
 		FileWriter fw = null;
 		try {
-			fw = new FileWriter("output.txt");
+			fw = new FileWriter(filename);
 		} catch (IOException e) {
 			e.printStackTrace();
 			throw new RuntimeException();
