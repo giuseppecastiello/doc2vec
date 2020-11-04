@@ -32,7 +32,7 @@ public class NewsFileClass {
 		try {
 			db = new DBManager(DBManager.JDBCURL);
 		} catch (ClassNotFoundException e) {
-			System.out.println("Missign lib...");
+			System.out.println("Missing PostgreSql jar...");
 			throw new RuntimeException();
 		} catch (SQLException e) {
 			System.out.println("Error trying to connect to db");
@@ -52,6 +52,7 @@ public class NewsFileClass {
 						rs.getDate("date"), rs.getString("tag"), rs.getString("municipality"), rs.getDate("date_event"), rs.getInt("id"))));
 			}
 			rs.close();
+			db.close();
 		} catch (SQLException e) {
 			e.printStackTrace();
 		}
@@ -81,14 +82,6 @@ public class NewsFileClass {
 			bw.flush();
 			bw.close();
 		} catch (IOException e) {
-			e.printStackTrace();
-		}
-	}
-
-	public void close() {
-		try {
-			db.close();
-		} catch (SQLException e) {
 			e.printStackTrace();
 		}
 	}

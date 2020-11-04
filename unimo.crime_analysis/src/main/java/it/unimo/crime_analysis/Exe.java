@@ -1,5 +1,6 @@
 package it.unimo.crime_analysis;
 import java.io.File;
+import java.io.FileNotFoundException;
 /*
 import java.io.BufferedWriter;
 import java.io.FileWriter;
@@ -20,6 +21,9 @@ import org.deeplearning4j.text.tokenization.tokenizerfactory.DefaultTokenizerFac
 import org.deeplearning4j.text.tokenization.tokenizerfactory.TokenizerFactory;
 
 public class Exe {
+	static NewsFileClass news;
+	static List<Notice> crimes;
+	static ParagraphVectors vec;
 /*
 	private static void createTokenizedFile(List<Notizia> crimes, TokenizerFactory t) {
 		FileWriter fw = null;
@@ -47,11 +51,15 @@ public class Exe {
 		}
 	}
 */
-	private static void CrimeAnalysisWithFilters() throws Exception{
-		NewsFileClass news = new NewsFileClass(); 
-		List<Notice> crimes = news.getCrimes();
-		
-		SentenceIterator iter = new BasicLineIterator(news.getFile());
+	
+	private static ParagraphVectors trainModel(File input) {
+		SentenceIterator iter;
+		try {
+			iter = new BasicLineIterator(input);
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
+			throw new RuntimeException();
+		}
 		AbstractCache<VocabWord> cache = new AbstractCache<>();
 		LabelsSource source = new LabelsSource("DOC_");
 		TokenizerFactory t = new DefaultTokenizerFactory();
@@ -78,7 +86,11 @@ public class Exe {
 				.build();
 
 		vec.fit();
-		
+		return vec;
+	}
+	
+	
+	private static void CrimeAnalysisWithFilters(boolean onlyJen2020) {
 		double all_similarity, threshold_down = 0.35, threshold_up = 0.7;
 		OutputFileClass out = new OutputFileClass("OutWFilters.txt");
 		int c = 0;
@@ -86,9 +98,11 @@ public class Exe {
 		for (int i = 0; i < crimes.size(); i++) {
 			Notice ni, nj;
 			ni = crimes.get(i);
+			if (onlyJen2020 && !ni.isInGen2020())
+				continue;
 			for (int j = i + 1; j < crimes.size(); j++) {
 				nj = crimes.get(j);
-				if (!ni.isInWindowWith(nj))
+				if ((onlyJen2020 && !nj.isInGen2020()) || !ni.isInWindowWith(nj))
 					continue;
 				all_similarity = vec.similarity("DOC_" + i, "DOC_" + j);
 				if (all_similarity < threshold_down)
@@ -102,19 +116,18 @@ public class Exe {
 				}
 			}
 		}
-		news.close();
 		out.close();
 		System.out.println(c);
 	}
 	
+	/*
 	private static void CreateGoldStandardFull(){
+		File gs = new File("GoldStandardFull.txt");
+		if (gs.exists())	return;
+		
 		NewsFileClass news = new NewsFileClass(); 
 		List<Notice> crimes = news.getCrimes();
 		news.close();
-		File gs = new File("GoldStandardFull.txt");
-		
-		if (gs.exists())	return;
-		
 		int c = 0;
 		OutputFileClass out = new OutputFileClass("GoldStandardFull.txt");
 		for (int i = 0; i < crimes.size(); i++) {
@@ -135,36 +148,42 @@ public class Exe {
 		out.close();
 		System.out.println(c);
 	}
+	*/
+	private static List<DuplicateCouple> readGoldStandard() {
+		return new GSFile().getDup();
+	}
 	
+	/*
 	private static void CreateGoldStandard(){
-		NewsFileClass news = new NewsFileClass(); 
-		List<Notice> crimes = news.getCrimes();
-		news.close();
 		File gs = new File("GoldStandard.txt");
-		
 		if (gs.exists())	return;
 		
+		List<DuplicateCouple> dup = readGoldStandard();
 		OutputFileClass out = new OutputFileClass("GoldStandard.txt");
-		for (int i = 0; i < crimes.size(); i++) {
-			Notice ni, nj;
-			ni = crimes.get(i);
-			if (!ni.isInGen2020())
-				continue;
-			for (int j = i + 1; j < crimes.size(); j++) {
-				nj = crimes.get(j);
-				if (!nj.isInGen2020() || !ni.isInWindowWith(nj))
-					continue;
-				out.write(ni.gsToString());
-				out.write(nj.gsToString());
-				out.write("");
-			}
+		for (int i = 0; i < dup.size(); i++) {
+			System.out.println(dup.get(i).id1 + " " + dup.get(i).id2);
+			out.write(dup.get(i).id1 + " " + dup.get(i).id2);
 		}
 		out.close();
 	}
+	*/
+	
+	private static void prepareForCrimeAnalysis() {
+		news = new NewsFileClass(); 
+		crimes = news.getCrimes();
+		vec = trainModel(news.getFile());
+	}
+	
+	private static void CompareAlgorithms() {
+		List<DuplicateCouple> dupGS = readGoldStandard();
+		prepareForCrimeAnalysis();
+		CrimeAnalysisWithFilters(true);
+		
+	}
 	
 	public static void main(String[] args) throws Exception {
-		//CrimeAnalysisWithFilters();
-		//CreateGoldStandardFull();
-		
+		prepareForCrimeAnalysis();
+		//CrimeAnalysisWithFilters(false);
+		CompareAlgorithms();
 	}
 }
