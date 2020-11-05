@@ -52,7 +52,10 @@ public class Notice {
 	public String toString() {
 		return all;
 	}
-
+	
+	public int getId() {
+		return this.id;
+	}
 	public boolean isInWindowWith(Notice other) {
 		if (Math.abs(Math.round((this.date.getTime() - other.date.getTime()) / 86400000.0)) <= 3)
 			return true;

@@ -24,11 +24,15 @@ public class OutputFileClass {
 	
 	public void write(String str) {
 		try {
-			bw.write(str + "\n");
+			bw.write(str);
 		} catch (IOException e) {
 			e.printStackTrace();
 			throw new RuntimeException();
 		}
+	}
+	
+	public void writeln(String str) {
+		write(str + "\n");
 	}
 	
 	public void close() {

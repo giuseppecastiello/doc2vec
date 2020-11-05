@@ -16,7 +16,7 @@ public class NewsFileClass {
 
 	public NewsFileClass(){
 		file = new File("news.txt");
-		crimes = dbExtraction();
+		crimes = dbNewsExtraction();
 		createFormattedFile(file);
 	}
 
@@ -40,7 +40,7 @@ public class NewsFileClass {
 		}
 	}
 
-	private List<Notice> dbExtraction() {
+	private List<Notice> dbNewsExtraction() {
 		dbConnection();
 		ResultSet rs = null;
 		crimes = new ArrayList<Notice>();
@@ -52,13 +52,31 @@ public class NewsFileClass {
 						rs.getDate("date"), rs.getString("tag"), rs.getString("municipality"), rs.getDate("date_event"), rs.getInt("id"))));
 			}
 			rs.close();
-			db.close();
 		} catch (SQLException e) {
 			e.printStackTrace();
 		}
 		return crimes;
 	}
 
+	public List<DuplicateCouple> dbDuplicateExtraction() {
+		dbConnection();
+		ResultSet rs = null;
+		List<DuplicateCouple> dup = new ArrayList<DuplicateCouple>();
+		String sql = "SELECT id_news1, id_news2 FROM crime_news.duplicate WHERE id_news1 in (" + 
+				"SELECT * FROM idNewsJen2020) and id_news2 in (" +
+				"SELECT * FROM idNewsJen2020);";
+		try {
+			rs = db.executeQuery(sql);
+			while(rs.next()) {
+				dup.add((new DuplicateCouple(rs.getInt("id_news1"), rs.getInt("id_news2"))));
+			}
+			rs.close();
+			db.close();
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+		return dup;
+	}
 
 	private void createFormattedFile(File file) {
 		FileWriter fw = null;
@@ -82,6 +100,14 @@ public class NewsFileClass {
 			bw.flush();
 			bw.close();
 		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+	
+	public void close() {
+		try {
+			db.close();
+		} catch (SQLException e) {
 			e.printStackTrace();
 		}
 	}
