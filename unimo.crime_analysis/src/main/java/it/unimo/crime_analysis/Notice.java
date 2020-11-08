@@ -65,14 +65,14 @@ public class Notice {
 		return false;
 	}
 
-	public boolean borderLineCompare(Notice other, double similarity, double threshold) {
+	public boolean borderLineCompare(Notice other, double similarity, double threshold_down, double threshold_up) {
 		if (!this.municipality.equals("") && this.municipality.equals(other.municipality)) {
-			similarity += 0.25;
+			similarity += (threshold_up - threshold_down) / 2;
 		}
 		if (!this.tag.equals("") && this.tag.equals(other.tag)) {
-			similarity += 0.25;
+			similarity += (threshold_up - threshold_down) / 2;
 		}
-		return similarity >= threshold;
+		return similarity >= threshold_up;
 	}
 
 	@SuppressWarnings("deprecation")
