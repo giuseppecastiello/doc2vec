@@ -56,8 +56,7 @@
 				<version>4.1.48.Final</version>
 			</dependency>
 		</dependencies>
-	</dependencyManagement>
-
+	</dependencyManagement>	
 	<dependencies>
 		<dependency>
 			<groupId>org.apache.commons</groupId>

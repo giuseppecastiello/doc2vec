@@ -71,7 +71,7 @@ public class NewsFileClass {
 				dup.add((new DuplicateCouple(rs.getInt("id_news1"), rs.getInt("id_news2"))));
 			}
 			rs.close();
-			db.close();
+			//db.close();
 		} catch (SQLException e) {
 			e.printStackTrace();
 		}
@@ -102,6 +102,30 @@ public class NewsFileClass {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
+	}
+	
+	public void printDupOfMT(List<DuplicateCouple> dup) {
+		int c = 0;
+		for (DuplicateCouple dc: dup) {
+			ResultSet rs = null;
+			try {
+				String s = "SELECT n1.newspaper as np1, n2.newspaper as np2"
+						+ " FROM (crime_news.link as l1 join crime_news.news as n1 on n1.url = l1.url) join" + 
+						" (crime_news.link as l2 join crime_news.news as n2 on n2.url = l2.url) on l1.id <> l2.id"
+						+ String.format(" WHERE l1.id = %d and l2.id = %d", dc.id1, dc.id2) + 
+						" and lower(n1.newspaper) like 'g%' and lower(n2.newspaper) like 'g%'";
+				//System.out.println(s);
+				rs = db.executeQuery(s);
+				if (rs.next()) {
+					System.out.println(dc.id1 + " " + rs.getString("np1") + " " + dc.id2 + " " + rs.getString("np2"));
+					c++;
+				}	
+			} catch (SQLException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
+		System.out.println(c);
 	}
 	
 	public void close() {

@@ -1,11 +1,9 @@
 package it.unimo.crime_analysis;
 import java.io.File;
+
 import java.io.FileNotFoundException;
-/*
-import java.io.BufferedWriter;
-import java.io.FileWriter;
-import java.io.IOException;
- */
+import java.io.BufferedReader;
+import java.io.FileReader;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -21,9 +19,10 @@ import org.deeplearning4j.text.tokenization.tokenizer.preprocessor.CommonPreproc
 import org.deeplearning4j.text.tokenization.tokenizerfactory.DefaultTokenizerFactory;
 import org.deeplearning4j.text.tokenization.tokenizerfactory.TokenizerFactory;
 
+
 public class Exe {
 	static NewsFileClass news = new NewsFileClass();
-	static List<Notice> crimes = news.getCrimes();;
+	static List<Notice> crimes = news.getCrimes();
 	static ParagraphVectors vec;
 	static List<DuplicateCouple> dupGS = readGoldStandard();
 	static List<DuplicateCouple> duplicatesFromDB = news.dbDuplicateExtraction();
@@ -92,7 +91,7 @@ public class Exe {
 	}
 
 
-	private static List<DuplicateCouple> CrimeAnalysisWithFilters(double threshold_down, double threshold_up, List<Notice> list) {
+	private static List<DuplicateCouple> Doc2VecConFiltri(double t1, double t2, List<Notice> list) {
 		double all_similarity;
 		//outputFileClass out = new OutputFileClass("OutWFilters.txt");
 		List<DuplicateCouple> dup = new ArrayList<DuplicateCouple>();
@@ -108,9 +107,9 @@ public class Exe {
 					all_similarity = vec.similarity("DOC_" + crimes.indexOf(ni), "DOC_" + crimes.indexOf(nj));
 				else
 					all_similarity = vec.similarity("DOC_" + i, "DOC_" + j);
-				if (all_similarity < threshold_down)
+				if (all_similarity < t1)
 					continue;
-				if (all_similarity > threshold_up || ni.borderLineCompare(nj, all_similarity, threshold_down, threshold_up)) {
+				if (all_similarity > t2 || ni.borderLineCompare(nj, all_similarity, t1, t2)) {
 
 					//out.writeln("DOC_" + i + ", DOC_" + j);
 					//out.writeln(ni.toString());
@@ -124,7 +123,7 @@ public class Exe {
 		return dup;
 	}
 
-	private static List<DuplicateCouple> CrimeAnalysisNoFilters(double threshold, List<Notice> list) {
+	private static List<DuplicateCouple> Doc2Vec(double threshold, List<Notice> list) {
 		double all_similarity;
 		//OutputFileClass out = new OutputFileClass("OutNFilters.txt");
 		List<DuplicateCouple> dup = new ArrayList<DuplicateCouple>();
@@ -177,139 +176,79 @@ public class Exe {
 		}
 		return newsOfJen2020;
 	}
-	
-	private static double CompareAlgorithms(double thresholdWF_d, double thresholdWF_u, double thresholdNF, boolean WF) {
+
+	private static double CompareAlgorithms(double t1, double t2, double t, boolean WF) {
 		List<Notice> newsOfJen2020 = getNewsOfJen2020();
 		StopWatch watch = new StopWatch();
-		List<DuplicateCouple> dupWF = null;
-		long timeWF = 0L;
-		if (WF) {
-			watch.start();
-			dupWF = CrimeAnalysisWithFilters(thresholdWF_d, thresholdWF_u, newsOfJen2020);
-			watch.stop();
-			timeWF = watch.getTime();
-		}
-		long timeNF = 0L;
-		List<DuplicateCouple> dupNF = null;
-		if (!WF) {
-			watch.start();
-			dupNF = CrimeAnalysisNoFilters(thresholdNF, newsOfJen2020);
-			watch.stop();
-			timeNF = watch.getTime();
-		}
-
-		List<DuplicateCouple> dupDB = new ArrayList<DuplicateCouple>(duplicatesFromDB);
-		int tpWF = 0, tpNF = 0, tpDB = 0;
-		int tnWF, tnNF, tnDB;
-		int fpWF, fpNF, fpDB;
-		int fnWF = 0, fnNF = 0, fnDB = 0;
-		String filename;
-		if (WF)
-			filename = "OutCompare" + thresholdWF_d + "_" + thresholdWF_u + ".txt";
-		else
-			filename = "OutCompare" + thresholdNF + ".txt";
-		OutputFileClass out = new OutputFileClass(filename);
-		//out.writeln("id1 \tid2 \tWF\t\tNF\t\tDB");
-		for (int i = 0; i < dupGS.size(); i++) {
-			boolean wf = false, nf = false, db = false;
-			if (WF && dupWF.contains(dupGS.get(i))) {
-				dupWF.remove(dupGS.get(i));
-				wf = true;
-				tpWF++;
-			} else
-				fnWF++;
-			if (!WF && dupNF.contains(dupGS.get(i))) {
-				dupNF.remove(dupGS.get(i));
-				nf = true;
-				tpNF++;
-			} else
-				fnNF++;
-			/*
-			if (dupDB.contains(dupGS.get(i))) {
-				dupDB.remove(dupGS.get(i));
-				db = true;
-				tpDB++;
-			} else
-				fnDB++;
-			 */
-			//out.writeln(dupGS.get(i) + "\t" + wf + "\t" + nf + "\t" + db);
-		}
-		if (WF) {
-			out.writeln("GS: " + dupGS.size() + " \tWF: " + tpWF);
-			fpWF = dupWF.size();
-			fpNF = 0;
-		}
-		else {
-			out.writeln("GS: " + dupGS.size() + " \tNF: " + tpNF);
-			fpWF = 0;
-			fpNF = dupNF.size();
-		}
-		//fpDB = dupDB.size();
-		int tot = newsOfJen2020.size();
-		tnWF = tot - tpWF - fnWF - fpWF;
-		tnNF = tot - tpNF - fnNF - fpNF;
-		//tnDB = tot - tpDB - fnDB - fpDB;
-		double precWF = ((double) tpWF) / (tpWF + fpWF), recWF = ((double) tpWF) / (tpWF + fnWF), accWF = ((double) tpWF + tnWF) / tot, f1WF = 2 * precWF * recWF / (precWF + recWF);
-		double precNF = ((double) tpNF) / (tpNF + fpNF), recNF = ((double) tpNF) / (tpNF + fnNF), accNF = ((double) tpNF + tnNF) / tot, f1NF = 2 * precNF * recNF / (precNF + recNF);
-		//double precDB = ((double) tpDB) / (tpDB + fpDB), recDB = ((double) tpDB) / (tpDB + fnDB), accDB = ((double) tpDB + tnDB) / tot, f1DB = 2 * precDB * recDB / (precDB + recDB);
-
-		if (WF)
-			printIndex("CrimeAnalysisWithFilters " + thresholdWF_d + "-" + thresholdWF_u, precWF, recWF, accWF, f1WF, timeWF, out);
-		else
-			printIndex("CrimeAnalysisNoFilters " + thresholdNF, precNF, recNF, accNF, f1NF, timeNF, out);
-		//printIndex("CRIMEDB", precDB, recDB, accDB, f1DB, out);
-		out.close();
-		if (WF)
-			return precWF + recWF + accWF + f1WF;
-		else
-			return precNF + recNF + accNF + f1NF;
-	}
-
-	public static void main(String[] args) {
-
-		vec = trainModel(news.getFile());
-		StopWatch watch = new StopWatch();
+		List<DuplicateCouple> dup = null;
 		watch.start();
-		CrimeAnalysisNoFilters(0.29, crimes);
+		if (WF)
+			dup = Doc2VecConFiltri(t1, t2, newsOfJen2020);
+		else
+			dup = Doc2Vec(t, newsOfJen2020);
 		watch.stop();
 		long time = watch.getTime();
-		System.out.print(time);
-		/*
-		double t_d, t_u = 0.54, t = 0.50;
-		double t_dm = 0, t_um = 0, t_m = 0;
-		double res, max = 0.;
-		
-		while (t_u >= 0.2) {
-			t_d = 0.30;
-			if (t_d > t_u)
-				t_d = t_u;
-			while (t_d >= 0.2) {
-				res = CompareAlgorithms(t_d, t_u, t, true);
-				if (res > max) {
-					t_dm = t_d;
-					t_um = t_u;
-					max = res;
-				}
-				t_d -= 0.01;
-			}
-			t_u -= 0.01;
+		long tp = 0, tn, fp, fn = 0;
+		String filename;
+		if (WF)
+			filename = String.format("OutCompare%.2f_%.2f.txt", t1, t2);
+		else
+			filename = String.format("OutCompare%.2f.txt", t);
+		OutputFileClass out = new OutputFileClass(filename);
+		for (DuplicateCouple dc: dupGS) {
+			if (dup.contains(dc)) {
+				dup.remove(dc);
+				tp++;
+			} else
+				fn++;
 		}
-		System.out.println("MAXWF: " + max);
-		System.out.println("td: " + t_dm + "  tu: " + t_um);
-		/*
-		max = 0.;
-		while (t >= 0.2) {
-			t_d = 0.30;
-			res = CompareAlgorithms(t_d, t_u, t, false);
-			if (res > max) {
-				t_m = t;
-				max = res;
-			}
-			t -= 0.01;
-		}
-		System.out.println("MAXNF: " + max);
-		System.out.println("t: " + t_m);
-		*/
+		out.writeln("GS: " + dupGS.size() + " \tA: " + tp);
+		fp = dup.size();
+		long tot = binomial(newsOfJen2020.size(), 2);
+		tn = tot - tp - fn - fp;
+		double prec, rec, acc, f1;
+		if (tp + fp != 0)
+			prec = (double) tp / (tp + fp);
+		else
+			prec = 0;
+		if (tp + fn != 0)
+			rec = (double) tp / (tp + fn);
+		else
+			rec = 0;
+		if (tot != 0)
+			acc  = ((double) tp  + tn) / tot;
+		else
+			acc = 0;
+		if (prec  + rec != 0)
+			f1  = 2 * prec  * rec  / (prec  + rec);
+		else
+			f1 = 0;
+
+		if (WF)
+			printIndex("Doc2VecConFiltri " + t1 + "-" + t2, prec, rec, acc, f1, time, out);
+		else
+			printIndex("Doc2Vec " + t, prec, rec, acc, f1, time, out);
+		out.close();
+		return prec + rec + acc + f1;
+	}
+	
+	 private static long binomial(int n, int k)
+	    {
+	        if (k>n-k)
+	            k=n-k;
+
+	        long b=1;
+	        for (int i=1, m=n; i<=k; i++, m--)
+	            b=b*m/i;
+	        return b;
+	    }
+	 
+	
+
+	public static void main(String[] args) {
+		vec = trainModel(news.getFile());
+		List<DuplicateCouple> dupD2V = Doc2Vec(0.27, crimes);
+		List<DuplicateCouple> dupD2VF = Doc2VecConFiltri(0.25, 0.30, crimes);
 		news.close();
 	}
 }
